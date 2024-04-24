@@ -48,6 +48,7 @@ void setEnvFile(const char* fileName) {
   fclose(file);
 }
 
+// called in ncclInit. set up the environment variables from the configuration files.
 void initEnv() {
   char confFilePath[1024];
   const char * userDir = userHomeDir();

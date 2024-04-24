@@ -416,7 +416,9 @@ static void* openNetPluginLib(void) {
   return nullptr;
 }
 
+// called in ncclInit.
 ncclResult_t ncclNetPluginInit() {
+  // check NCCL_NET_PLUGIN and libnccl-net.so
   void* netPluginLib = openNetPluginLib();
   if (netPluginLib == nullptr) {
     INFO(NCCL_INIT|NCCL_NET, "NET/Plugin: Using internal network plugin.");

@@ -25,12 +25,14 @@ static union ncclSocketAddress bootstrapNetIfAddr;
 static int bootstrapNetInitDone = 0;
 pthread_mutex_t bootstrapNetLock = PTHREAD_MUTEX_INITIALIZER;
 
+// called in ncclInit. 
 ncclResult_t bootstrapNetInit() {
   if (bootstrapNetInitDone == 0) {
     pthread_mutex_lock(&bootstrapNetLock);
     if (bootstrapNetInitDone == 0) {
       const char* env = ncclGetEnv("NCCL_COMM_ID");
       if (env) {
+        // get sockect info from NCCL_COMM_ID. Could be <ipv4>:<port> or [<ipv6>]:<port> or <hostname>:<port>.
         union ncclSocketAddress remoteAddr;
         if (ncclSocketGetAddrFromString(&remoteAddr, env) != ncclSuccess) {
           WARN("Invalid NCCL_COMM_ID, please use format: <ipv4>:<port> or [<ipv6>]:<port> or <hostname>:<port>");

@@ -74,11 +74,13 @@ ncclResult_t initGdrCopy() {
 pthread_mutex_t initLock = PTHREAD_MUTEX_INITIALIZER;
 static bool initialized = false;
 
+// called in ncclGetUniqueId.
 static ncclResult_t ncclInit() {
   if (__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)) return ncclSuccess;
   pthread_mutex_lock(&initLock);
   if (!initialized) {
     initEnv();
+    // load libgdrapi.so symbols if available (GDR copy)
     initGdrCopy();
     // Always initialize bootstrap network
     NCCLCHECK(bootstrapNetInit());
@@ -98,6 +100,7 @@ ncclResult_t ncclGetVersion(int* version) {
   return ncclSuccess;
 }
 
+// Generates an Id to be used in ncclCommInitRank. unique id is ncclBootstrapHandle.
 NCCL_API(ncclResult_t, ncclGetUniqueId, ncclUniqueId* out);
 ncclResult_t ncclGetUniqueId(ncclUniqueId* out) {
   NCCLCHECK(ncclInit());

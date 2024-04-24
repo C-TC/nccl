@@ -34,6 +34,7 @@ typedef struct ncclComm* ncclComm_t;
 typedef struct { char internal[NCCL_UNIQUE_ID_BYTES]; } ncclUniqueId;
 
 /* Error type */
+// ncclResult_t
 typedef enum { ncclSuccess                 =  0,
                ncclUnhandledCudaError      =  1,
                ncclSystemError             =  2,

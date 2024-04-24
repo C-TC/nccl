@@ -320,6 +320,7 @@ ncclResult_t ncclSocketGetAddrFromString(union ncclSocketAddress* ua, const char
   return ncclSuccess;
 }
 
+// find network interface. 1. NCCL_SOCKET_IFNAME 2. NCCL_COMM_ID 3. others 4. docker 5. lo
 int ncclFindInterfaces(char* ifNames, union ncclSocketAddress *ifAddrs, int ifNameMaxSize, int maxIfs) {
   static int shownIfName = 0;
   int nIfs = 0;
