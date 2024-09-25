@@ -263,6 +263,7 @@ enum ncclLaunchMode ncclParamLaunchMode;
 NCCL_PARAM(DmaBufEnable, "DMABUF_ENABLE", 1);
 
 // Detect DMA-BUF support
+// what is dma buf?
 static ncclResult_t dmaBufSupported(struct ncclComm* comm) {
   if (ncclParamDmaBufEnable() == 0 || comm->ncclNet->regMrDmaBuf == NULL || ncclCudaLibraryInit() != ncclSuccess) return ncclInternalError;
 #if CUDA_VERSION >= 11070
@@ -305,6 +306,7 @@ exit:
   return ret;
 }
 
+// called in ncclCommInitRankFunc.
 static ncclResult_t commAlloc(struct ncclComm* comm, struct ncclComm* parent, int ndev, int rank) {
   if (ndev < 1) {
     WARN("invalid device count (%d) requested", ndev);
@@ -893,6 +895,7 @@ static int checkMNNVL(struct ncclComm* comm) {
 }
 #endif
 
+// called in ncclCommInitRankFunc. Detect available connections and create topology graph, e.g. ring/tree/collnet/NVLS
 static ncclResult_t initTransportsRank(struct ncclComm* comm, struct ncclComm* parent = NULL) {
   // We use 2 AllGathers
   // 1. { peerInfo, comm, compCap}
@@ -902,6 +905,7 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, struct ncclComm* p
   int nranks = comm->nRanks;
   int nNodes = 1;
   cpu_set_t affinitySave;
+  // multiple types of topo graphs.
   struct ncclTopoGraph ringGraph;
   struct ncclTopoGraph treeGraph;
   struct ncclTopoGraph collNetGraph;
@@ -1012,6 +1016,7 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, struct ncclComm* p
   } while(0);
 
   // Topo detection / System graph creation
+  // topo detection: all available connections
   NCCLCHECKGOTO(ncclTopoGetSystem(comm, &comm->topo), ret, fail);
   // Compute paths between GPUs and NICs
   NCCLCHECKGOTO(ncclTopoComputePaths(comm->topo, comm), ret, fail);
@@ -1020,12 +1025,14 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, struct ncclComm* p
   // Recompute paths after trimming
   NCCLCHECKGOTO(ncclTopoComputePaths(comm->topo, comm), ret, fail);
   // Init search
+  // setting system total/max bandwidth.
   NCCLCHECKGOTO(ncclTopoSearchInit(comm->topo), ret, fail);
   // Print final topology
   NCCLCHECKGOTO(ncclTopoPrint(comm->topo), ret, fail);
 
   // Set Affinity to a CPU local the our GPU, so that all memory we allocate
   // on the host is local.
+  // cpu affinity.
   NCCLCHECKGOTO(ncclTopoGetCpuAffinity(comm->topo, comm->rank, &comm->cpuAffinity), ret, fail);
   if (CPU_COUNT(&comm->cpuAffinity)) {
     sched_getaffinity(0, sizeof(cpu_set_t), &affinitySave);
@@ -1501,6 +1508,7 @@ fail:
   goto exit;
 }
 
+// called in ncclCommInitRankDev
 static ncclResult_t ncclCommInitRankFunc(struct ncclAsyncJob* job_) {
   struct ncclCommInitRankAsyncJob* job = (struct ncclCommInitRankAsyncJob*)job_;
   ncclComm_t comm = job->comm;
@@ -1759,6 +1767,7 @@ fail:
   goto exit;
 }
 
+// called in ncclCommInitRank.
 static ncclResult_t ncclCommInitRankDev(ncclComm_t* newcomm, int nranks, ncclUniqueId commId, int myrank, int cudaDev, ncclConfig_t *config) {
   ncclResult_t res = ncclSuccess;
   ncclComm_t comm = NULL;
@@ -1825,6 +1834,7 @@ constexpr nvtxPayloadSchemaEntry_t CommInitRankSchema[] = {
   {0, NVTX_PAYLOAD_ENTRY_TYPE_INT, "CUDA device", nullptr, 0, offsetof(NvtxParamsCommInitRank, cudaDev)},
 };
 
+// called after get unique id. wrapped in group start/end, guess this is the preconnect jobs?
 NCCL_API(ncclResult_t, ncclCommInitRank, ncclComm_t* newcomm, int nranks, ncclUniqueId commId, int myrank);
 ncclResult_t ncclCommInitRank(ncclComm_t* newcomm, int nranks, ncclUniqueId commId, int myrank) {
   // Load the CUDA driver and dlsym hooks (can fail on old drivers)

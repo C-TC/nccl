@@ -273,6 +273,7 @@ static ncclResult_t groupLaunch(struct ncclAsyncJob *job_) {
 
   CUDACHECKGOTO(cudaGetDevice(&savedDev), ret, fail);
 
+  // enqueue preconnect jobs
   if (groupCommPreconnectHeadMain != nullptr) {
     struct ncclComm* comm = groupCommPreconnectHeadMain;
     do {
@@ -292,6 +293,7 @@ static ncclResult_t groupLaunch(struct ncclAsyncJob *job_) {
     } while (comm != nullptr);
   }
 
+  // one thread per preconnect job.
   if (!ncclIntruQueueEmpty(asyncJobsMain)) {
     struct ncclAsyncJob* job = ncclIntruQueueHead(asyncJobsMain);
     do {
@@ -330,11 +332,13 @@ static ncclResult_t groupLaunch(struct ncclAsyncJob *job_) {
       } while (job != nullptr);
       // Let preconnect threads progress.
       if (jobsDone == false) usleep(1);
+      // spin until all jobs are done!
     } while (jobsDone == false);
 
     if (ret != ncclSuccess) goto fail;
   }
 
+  // launch normal jobs
   if (groupCommHeadMain != nullptr) {
     NCCLCHECKGOTO(doLaunches(groupCommHeadMain), ret, fail);
   }
@@ -374,6 +378,7 @@ ncclResult_t ncclGroupEndInternal() {
     goto exit;
   }
 
+  // do nothing if we are exiting inner group.
   if ((--ncclGroupDepth) > 0) goto exit;
 
   if ((ret = ncclGroupError) != ncclSuccess) goto fail;
@@ -411,10 +416,12 @@ ncclResult_t ncclGroupEndInternal() {
       }
 
       ncclGroupJobMainPtr->base.func = groupLaunch;
+      // unblocking launch on a separate thread.
       SYSCHECKGOTO(pthread_create(&ncclGroupJobMainPtr->base.thread, NULL, ncclAsyncJobMain, (void*)&ncclGroupJobMainPtr->base), ret, fail);
       ret = ncclInProgress;
     } else {
       /* blocking group */
+      // launch on the same thread.
       NCCLCHECKGOTO(groupLaunch(&ncclGroupJobMainPtr->base), ret, fail);
       groupResetJobState(ncclGroupJobMainPtr);
     }

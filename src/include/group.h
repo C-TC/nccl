@@ -88,6 +88,7 @@ static inline ncclResult_t groupJobComplete(struct ncclGroupJob* job) {
   return ret;
 }
 
+// groupstart is just incrementing the depth. The actual work is done in groupEnd.
 inline ncclResult_t ncclGroupStartInternal() {
   ncclGroupDepth++;
   return ncclSuccess;

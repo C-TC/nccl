@@ -32,6 +32,7 @@ static float getTotalBw(struct ncclTopoSystem* system, struct ncclTopoNode* gpu)
     if (link->type == LINK_NVL) nvlinkBw += link->bw;
     if (link->type == LINK_PCI) pciBw = link->bw;
   }
+  // either goes through NVLink or PCI
   return std::max(pciBw, nvlinkBw);
 }
 ncclResult_t ncclTopoSearchInit(struct ncclTopoSystem* system) {
@@ -857,6 +858,8 @@ float sm90SpeedArrayInter[] = { 48.0, 45.0, 42.0, 40.0, 30.0, 24.0, 22.0, 20.0, 
 #define NSPEEDSINTRA_SM90 (sizeof(sm90SpeedArrayIntra)/sizeof(float))
 #define NSPEEDSINTER_SM90 (sizeof(sm90SpeedArrayInter)/sizeof(float))
 
+
+// TODO: how actually topo is computed?
 ncclResult_t ncclTopoCompute(ncclTopoSystem* system, struct ncclTopoGraph* graph) {
   int ngpus = system->nodes[GPU].count;
   int crossNic = (system->nodes[NET].count > 1) &&
@@ -929,6 +932,7 @@ search:
   tmpGraph.nChannels = 0;
   globalTimeout -= time;
 
+  // topo search
   NCCLCHECK(ncclTopoSearchRec(system, &tmpGraph, graph, &time));
 #if 0
   printf("Id %d Pattern %d, crossNic %d, Bw %g/%g, type %d/%d, channels %d-%d sameChannels %d -> nChannels %dx%g/%g %s\n", tmpGraph.id, tmpGraph.pattern, tmpGraph.crossNic, tmpGraph.bwInter, tmpGraph.bwIntra, tmpGraph.typeInter, tmpGraph.typeIntra, tmpGraph.minChannels, tmpGraph.maxChannels, tmpGraph.sameChannels, graph->nChannels, graph->bwInter, graph->bwIntra, time == 0 ? "TIMEOUT" : time == -1 ? "PERFECT" : "");

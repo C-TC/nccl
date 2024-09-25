@@ -30,6 +30,7 @@
 // to GPU traffic consumes more PCI bandwidth.
 #define INTEL_P2P_OVERHEAD(bw) (bw*6/5)
 
+// node types
 #define NCCL_TOPO_NODE_TYPES 7
 #define GPU 0
 #define PCI 1
@@ -39,6 +40,7 @@
 #define NET 5
 extern const char* topoNodeTypeStr[];
 
+// link types
 // We want link types and path types to match as much as possible
 #define LINK_LOC 0
 #define LINK_NVL 1
@@ -51,6 +53,7 @@ extern const char* topoNodeTypeStr[];
 #define LINK_NET 8
 extern const char* topoLinkTypeStr[];
 
+// path types
 // Local (myself)
 #define PATH_LOC 0
 

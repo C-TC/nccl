@@ -32,6 +32,7 @@ static ncclResult_t getLoopInfo(struct ncclInfo* collInfo);
 static ncclResult_t getCollNetSupport(struct ncclInfo* info, int* collNetSupport);
 
 // Returns maximum kernel stack size of all CUDA kernels
+// called in ncclCommInitRankDev
 ncclResult_t ncclInitKernelsForDevice(int cudaArch, size_t* maxStackSize) {
   ncclResult_t result = ncclSuccess;
 

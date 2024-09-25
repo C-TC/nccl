@@ -541,6 +541,7 @@ ncclResult_t bootstrapRingAllGather(struct ncclSocket* prevSocket, struct ncclSo
     size_t sslice = (rank - i + nranks) % nranks;
 
     // Send slice to the right, recv slice from the left
+    // use socket send/recv for bootstrap
     NCCLCHECK(bootstrapNetSendRecv(nextSocket, data+sslice*size, size, prevSocket, data+rslice*size, size));
   }
   return ncclSuccess;

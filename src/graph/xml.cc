@@ -785,6 +785,7 @@ ncclResult_t ncclTopoGetXmlFromGpu(struct ncclXmlNode* pciNode, nvmlDevice_t nvm
   NCCLCHECK(xmlGetSub(gpuNode, "c2c", &c2cNode));
   if (c2cNode == NULL) {
       if (sm >= 90) {
+        // chip to chip links on hopper.
         int c2cLinksCount = 0;
         nvmlFieldValue_t fv;
         fv.fieldId = NVML_FI_DEV_C2C_LINK_COUNT;
